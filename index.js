@@ -5,6 +5,8 @@ import {
   Platform,
 } from 'react-native';
 
+import CompareVersions from 'compare-versions';
+
 const RNAppUpdate = NativeModules.RNAppUpdate;
 
 const jobId = -1;
@@ -38,7 +40,7 @@ class AppUpdate {
 
   getPlayMarketVersionSuccess(remote) {
     console.log("getPlayMarketVersionSuccess", remote);
-    if (RNAppUpdate.versionName !== remote.versionName) {
+    if (CompareVersions(remote.versionName, RNAppUpdate.versionName) > 0) {
       if (this.options.needUpdateApp) {
         this.options.needUpdateApp((isUpdate) => {
           if (isUpdate) {
@@ -65,7 +67,7 @@ class AppUpdate {
     const result = data.results[0];
     const version = result.version;
     const trackViewUrl = result.trackViewUrl;
-    if (version !== RNAppUpdate.versionName) {
+    if (CompareVersions(version, RNAppUpdate.versionName) > 0) {
       if (this.options.needUpdateApp) {
         this.options.needUpdateApp((isUpdate) => {
           if (isUpdate) {
