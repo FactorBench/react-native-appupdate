@@ -4,7 +4,6 @@ import {
   NativeModules,
   Platform,
 } from 'react-native';
-import RNFS from 'react-native-fs';
 
 const RNAppUpdate = NativeModules.RNAppUpdate;
 
@@ -26,7 +25,7 @@ class AppUpdate {
       });
   }
 
-  getApkVersion() {
+  getPlayMarketVersion() {
     if (jobId !== -1) {
       return;
     }
@@ -34,63 +33,20 @@ class AppUpdate {
       console.log("apkVersionUrl doesn't exist.");
       return;
     }
-    this.GET(this.options.apkVersionUrl, this.getApkVersionSuccess.bind(this), this.getVersionError.bind(this));
+    this.GET(this.options.apkVersionUrl, this.getPlayMarketVersionSuccess.bind(this), this.getVersionError.bind(this));
   }
 
-  getApkVersionSuccess(remote) {
-    console.log("getApkVersionSuccess", remote);
+  getPlayMarketVersionSuccess(remote) {
+    console.log("getPlayMarketVersionSuccess", remote);
     if (RNAppUpdate.versionName !== remote.versionName) {
-      if (remote.forceUpdate) {
-        if(this.options.forceUpdateApp) {
-          this.options.forceUpdateApp();
-        }
-        this.downloadApk(remote);
-      } else if (this.options.needUpdateApp) {
+      if (this.options.needUpdateApp) {
         this.options.needUpdateApp((isUpdate) => {
           if (isUpdate) {
-            this.downloadApk(remote);
+            // TODO: install from play market
           }
         });
       }
-    } else if(this.options.notNeedUpdateApp) {
-      this.options.notNeedUpdateApp();
     }
-  }
-
-  downloadApk(remote) {
-    const progress = (data) => {
-      const percentage = ((100 * data.bytesWritten) / data.contentLength) | 0;
-      this.options.downloadApkProgress && this.options.downloadApkProgress(percentage);
-    };
-    const begin = (res) => {
-      console.log("downloadApkStart");
-      this.options.downloadApkStart && this.options.downloadApkStart();
-    };
-    const progressDivider = 1;
-    const downloadDestPath = `${RNFS.DocumentDirectoryPath}/NewApp.apk`;
-
-    const ret = RNFS.downloadFile({
-      fromUrl: remote.apkUrl,
-      toFile: downloadDestPath,
-      begin,
-      progress,
-      background: true,
-      progressDivider
-    });
-
-    jobId = ret.jobId;
-
-    ret.promise.then((res) => {
-      console.log("downloadApkEnd");
-      this.options.downloadApkEnd && this.options.downloadApkEnd();
-      RNAppUpdate.installApk(downloadDestPath);
-
-      jobId = -1;
-    }).catch((err) => {
-      this.downloadApkError(err);
-
-      jobId = -1;
-    });
   }
 
   getAppStoreVersion() {
@@ -124,14 +80,9 @@ class AppUpdate {
     console.log("getVersionError", err);
   }
 
-  downloadApkError(err) {
-    console.log("downloadApkError", err);
-    this.options.onError && this.options.onError();
-  }
-
   checkUpdate() {
     if (Platform.OS === 'android') {
-      this.getApkVersion();
+      this.getPlayMarketVersion();
     } else {
       this.getAppStoreVersion();
     }
